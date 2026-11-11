@@ -2,6 +2,9 @@ const listElement = document.querySelector("#incident-list");
 const listStatusElement = document.querySelector("#list-status");
 const detailsElement = document.querySelector("#incident-details");
 const filterForm = document.querySelector("#filter-form");
+const summaryButton = document.querySelector("#summary-button");
+const summaryStatusElement = document.querySelector("#summary-status");
+const summaryListElement = document.querySelector("#summary-list");
 
 async function apiFetch(path, options = {}) {
   const response = await fetch(path, {
@@ -102,6 +105,27 @@ async function loadIncidentDetails(id) {
     detailsElement.textContent = `Помилка: ${error.message}`;
   }
 }
+
+async function loadSeveritySummary() {
+  summaryListElement.replaceChildren();
+  summaryStatusElement.textContent = "Завантаження…";
+
+  try {
+    const summary = await apiFetch("/api/incidents/severity-summary");
+
+    summaryStatusElement.textContent = "";
+
+    for (const group of summary) {
+      const item = document.createElement("li");
+      item.textContent = `${group.severity}: ${group.count}`;
+      summaryListElement.append(item);
+    }
+  } catch (error) {
+    summaryStatusElement.textContent = "Не вдалося завантажити підсумок.";
+  }
+}
+
+summaryButton.addEventListener("click", loadSeveritySummary);
 
 filterForm.addEventListener("submit", (event) => {
   event.preventDefault();
