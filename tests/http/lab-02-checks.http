@@ -34,3 +34,32 @@ GET {{api}}/api/incidents/search?q=zz-no-match%27%20OR%20TRUE%20--%20
 
 ### D. Легітимний апостроф
 GET {{api}}/api/incidents/search?q=O%27Brien
+
+
+### S-02. Перевірка усунення SQL injection
+# Очікується: 200 OK, []
+GET {{api}}/api/incidents/search?q=zz-no-match%27%20OR%20TRUE%20--%20
+
+### T-04. Пошук із апострофом
+# Очікується: 200 OK, O'Brien classroom report
+GET {{api}}/api/incidents/search?q=O%27Brien
+
+### T-05. Недопустиме сортування
+# Очікується: 400 Bad Request
+GET {{api}}/api/incidents/search?sortBy=price
+
+### Перевірка сортування за рівнем небезпеки
+# Очікується: Critical, High, Medium, Low
+GET {{api}}/api/incidents/search?sortBy=severity
+
+### Перевірка сортування за статусом
+# Очікується: New, Triaged, InProgress, Resolved, Closed
+GET {{api}}/api/incidents/search?sortBy=status
+
+### Перевірка сортування за датою
+# Очікується: новіші інциденти першими
+GET {{api}}/api/incidents/search?sortBy=createdAtUtc
+
+### Перевірка екранування %
+# Очікується: 200 OK, []
+GET {{api}}/api/incidents/search?q=%25

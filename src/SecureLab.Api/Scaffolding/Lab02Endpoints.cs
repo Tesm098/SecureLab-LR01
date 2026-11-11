@@ -9,22 +9,75 @@ public static class Lab02Endpoints
 {
     public static void MapLab02Endpoints(this WebApplication app)
     {
-        app.MapGet("/api/incidents/search", async (string? q, string? sortBy, SecureLabDbContext db, CancellationToken ct) =>
+    app.MapGet("/api/incidents/search", async (
+        string? q,
+        string? sortBy,
+        SecureLabDbContext db,
+        CancellationToken ct) =>
+    {
+        // Дозволені способи сортування
+        if (sortBy is not (null or "" or
+            "createdAtUtc" or "severity" or "status"))
         {
-            var order = sortBy switch
-            {
-                null or "" or "createdAtUtc" => "created_at_utc DESC",
-                "severity" => "severity", "status" => "status", _ => sortBy
-            };
-            var sql = "SELECT * FROM incidents WHERE title ILIKE '%" + (q ?? "")
-                + "%' OR description ILIKE '%" + (q ?? "") + "%' ORDER BY " + order + " LIMIT 50";
-            var rows = await db.Incidents.FromSqlRaw(sql).AsNoTracking().ToListAsync(ct);
-            return Results.Ok(rows.Select(row => new
-            {
-                row.Id, row.Title, row.Description,
-                Severity = row.Severity.ToString(), Status = row.Status.ToString(), row.CreatedAtUtc
-            }));
-        });
+            return Results.ValidationProblem(
+                new Dictionary<string, string[]>
+                {
+                    ["sortBy"] =
+                    ["Допустимі значення: createdAtUtc, severity, status."]
+                });
+        }
+
+        var query = db.Incidents.AsNoTracking();
+
+        // Безпечний пошук за Title та Description
+        if (!string.IsNullOrEmpty(q))
+        {
+            var escaped = q
+                .Replace("\\", "\\\\")
+                .Replace("%", "\\%")
+                .Replace("_", "\\_");
+
+            var pattern = $"%{escaped}%";
+
+            query = query.Where(incident =>
+                EF.Functions.ILike(incident.Title, pattern, "\\") ||
+                EF.Functions.ILike(incident.Description, pattern, "\\"));
+        }
+
+        // Сортування тільки за дозволеними полями
+        var ordered = sortBy switch
+        {
+            "severity" => query.OrderBy(incident =>
+                incident.Severity == IncidentSeverity.Critical ? 0 :
+                incident.Severity == IncidentSeverity.High ? 1 :
+                incident.Severity == IncidentSeverity.Medium ? 2 : 3),
+
+            "status" => query.OrderBy(incident =>
+                incident.Status == IncidentStatus.New ? 0 :
+                incident.Status == IncidentStatus.Triaged ? 1 :
+                incident.Status == IncidentStatus.InProgress ? 2 :
+                incident.Status == IncidentStatus.Resolved ? 3 : 4),
+
+            _ => query.OrderByDescending(
+                incident => incident.CreatedAtUtc)
+        };
+
+        var rows = await ordered
+            .ThenBy(incident => incident.Id)
+            .Take(50)
+            .ToListAsync(ct);
+
+        return Results.Ok(rows.Select(incident => new
+        {
+            incident.Id,
+            incident.Title,
+            incident.Description,
+            Severity = incident.Severity.ToString(),
+            Status = incident.Status.ToString(),
+            incident.CreatedAtUtc
+        }));
+    });
+
         app.MapPost("/api/incidents", async (
             CreateIncidentRequest request,
             SecureLabDbContext db,
