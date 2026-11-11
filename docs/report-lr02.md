@@ -1,9 +1,9 @@
 # Звіт WEB ЛР 2
 
-**Дисципліна:** «Прикладні технології програмування в інформаційній безпеці»
-**Тема:** «Контракт API, серверна валідація та захист від SQL injection»
-**Виконав:** Кліванський Володимир, група КБ–42
-**Дата:** 11.11.2026
+**Дисципліна:** «Прикладні технології програмування в інформаційній безпеці»  
+**Тема:** «Контракт API, серверна валідація та захист від SQL injection»  
+**Виконав:** Кліванський Володимир, група КБ–42  
+**Дата:** 11.11.2026  
 **Заявлений рівень:** достатній («Задовільно»)
 
 ## 1. Ідентифікація
@@ -16,10 +16,10 @@
 - **entry_parent:** `6ebeaade296c94409d97fe62c85edf27e11d0198`.
 - **Vulnerable commit:** `ea2960e` — `Validate create contract; preserve search evidence`.
 - **Fixed commit коду:** `990b20d` — `Fix SQL injection and validate search sorting`.
-- **Фінальний тег:** `v0.2.0` — **ще не створений**; буде доданий після commit цього звіту.
+- **Фінальний анотований тег:** `v0.2.0` — створений на commit звіту `76adf15e0a761974ae1e09a8363ef1902b523d34` і опублікований на GitHub.
 - **Середовище:** Windows, .NET SDK `10.0.403`, ASP.NET Core / EF Core, Docker Compose, PostgreSQL 18.4, локальний API `http://localhost:5080`.
-- **Вихідний репозиторій ЛР 1:** [SecureLab-LR01](https://github.com/Tesm098/SecureLab-LR01).
-- **DEL-01 — передавання ЛР 2:** локально підготовлені гілка й історія; URL погодженого приватного remote або ім’я Git bundle потрібно внести **після фактичного передавання**. Публікацію vulnerable commit у відкритому GitHub не виконували.
+- **Репозиторій GitHub:** [Tesm098/SecureLab-LR01](https://github.com/Tesm098/SecureLab-LR01); лабораторна №2 доступна у [гілці `lab/2-input-sqli`](https://github.com/Tesm098/SecureLab-LR01/tree/lab/2-input-sqli), а звіт — за [посиланням `docs/report-lr02.md`](https://github.com/Tesm098/SecureLab-LR01/blob/lab/2-input-sqli/docs/report-lr02.md).
+- **DEL-01 — передавання ЛР 2:** виконано `git push -u origin lab/2-input-sqli` та `git push origin v0.2.0`; обидві операції завершилися успішно (GitHub: `Tesm098/SecureLab-LR01`). Додатково створено `SecureLab-LR02.bundle`, перевірено `git bundle verify` (повідомлення `is okay`, `complete history`) та `git bundle list-heads` (гілка `lab/2-input-sqli`, тег `v0.2.0`). За рішенням автора публічно доступна також історія навчального vulnerable commit; локальний стенд не публікується як запущений сервіс.
 
 ## 2. Контракт API та CP-01
 
@@ -83,7 +83,7 @@ Endpoint `GET /api/incidents/search` отримує недовірені пар�
 - Сортування `severity`, `status`, `createdAtUtc` → **200 OK** із відповідним порядком. На час перевірок було 7 записів; після підсумкового reset навчальна база повернулася до seed.
 - У журналі EF Core після fix зафіксовано `Parameters=[@pattern='?', @pattern0='?', @p='?']` та `ILIKE @pattern ... ESCAPE`, що підтверджує відокремлення значень від SQL-структури.
 
-**Git-доказ:** `git diff ea2960e 990b20d -- src/SecureLab.Api/Scaffolding/Lab02Endpoints.cs` показує заміну `FromSqlRaw` на LINQ/`ILike` та додавання allowlist.
+**Git-доказ:** `git diff ea2960e 990b20d -- src/SecureLab.Api/Scaffolding/Lab02Endpoints.cs` показує заміну `FromSqlRaw` на LINQ/`ILike` та додавання allowlist. Порівняння та обидва commits доступні в GitHub: [diff vulnerable → fixed](https://github.com/Tesm098/SecureLab-LR01/compare/ea2960e...990b20d).
 
 ## 4. Фактичні перевірки DEL-02
 
@@ -122,9 +122,11 @@ dotnet test tests/SecureLab.Api.Tests -c Release — total: 5, failed: 0, succee
 
 ## 7. Передавання
 
-- **Поточний статус:** локально створено vulnerable та fixed commits; зміни ще **не передано** до погодженого віддаленого сховища.
-- **Фінальний Markdown-звіт:** `docs/report-lr02.md`; його потрібно зберегти окремим commit **після** останньої перевірки змісту.
-- **Тег `v0.2.0`:** потрібно створити на commit звіту, а не на vulnerable commit.
-- **Посилання для передачі ЛР 2 / Git bundle:** доповнити тільки після фактичного створення й перевірки доступу. Відкритий [SecureLab-LR01](https://github.com/Tesm098/SecureLab-LR01) наразі є адресою базового проєкту, а не доказом публікації ЛР 2.
+> Примітка: підтверджений тег `v0.2.0` указує на початкову зафіксовану версію звіту від 11.11.2026. Це уточнення статусу публікації є документальною правкою, яка вноситься окремим наступним commit; уже опублікований тег не переноситься.
+
+- **Поточний статус:** завершена гілка `lab/2-input-sqli` та анотований тег `v0.2.0` опубліковані у GitHub-репозиторії [Tesm098/SecureLab-LR01](https://github.com/Tesm098/SecureLab-LR01). Вихідний стан `v0.1.0` та історію vulnerable/fixed commits збережено.
+- **Фінальний Markdown-звіт:** `docs/report-lr02.md` внесено окремим commit `76adf15e0a761974ae1e09a8363ef1902b523d34` після fixed commit `990b20d`.
+- **Тег `v0.2.0`:** створено як анотований тег із повідомленням `Laboratory work 2 completed`; `git rev-list -n 1 v0.2.0` і `git rev-parse HEAD` повернули однаковий commit `76adf15e0a761974ae1e09a8363ef1902b523d34` на момент створення тегу.
+- **Посилання для передачі ЛР 2:** [гілка ЛР №2](https://github.com/Tesm098/SecureLab-LR01/tree/lab/2-input-sqli), [звіт](https://github.com/Tesm098/SecureLab-LR01/blob/lab/2-input-sqli/docs/report-lr02.md), [тег `v0.2.0`](https://github.com/Tesm098/SecureLab-LR01/tree/v0.2.0). Альтернативний локальний артефакт: `SecureLab-LR02.bundle` з перевіреною цілісністю (у GitHub не завантажувався).
 - **Moodle:** DOCX-звіт за оформленням ЛР 1 буде підготовлено окремо; у Moodle необхідно завантажити PDF, отриманий із DOCX. До моменту завантаження цей пункт не позначається як виконаний.
-- **Перевірка Git на секрети та локальні артефакти:** виконати перед передаванням репозиторію.
+- **Перевірка Git:** перед публікацією `git status` показував `working tree clean`; окремого повного аудиту всіх історичних commits на секрети не зафіксовано. Навчальні локальні облікові дані не використовувати у реальних середовищах.
