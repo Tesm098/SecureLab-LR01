@@ -25,6 +25,11 @@ Accept: application/json
 GET {{host}}/api/incidents?status=Unknown
 Accept: application/json
 
-### Lab 1 extension point: expected 501 before student implementation
+# T-06: Підсумок інцидентів за рівнями небезпеки.
+# Очікується: 200 OK, application/json.
+# Політика: тільки наявні групи, порядок за зростанням severity.
+# Початкові дані: Low=1, Medium=1, High=1.
+# Critical відсутній, оскільки інцидентів цього рівня немає.
+
 GET {{host}}/api/incidents/severity-summary
 Accept: application/json
