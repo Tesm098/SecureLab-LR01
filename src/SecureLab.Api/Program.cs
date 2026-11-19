@@ -1,3 +1,5 @@
+
+using SecureLab.Api.Scaffolding;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using SecureLab.Api.Application.Incidents;
@@ -9,6 +11,7 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
     Args = args,
     WebRootPath = "Client"
 });
+
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
 
@@ -18,12 +21,36 @@ var connectionString = builder.Configuration.GetConnectionString("SecureLab")
 
 builder.Services.AddDbContext<SecureLabDbContext>(options =>
     options.UseNpgsql(connectionString));
+
 builder.Services.AddScoped<IncidentQueries>();
+
+builder.AddLab03Identity();
+
+// ЛР №5. Мінімальна CORS-політика лише для Development.
+if (builder.Environment.IsDevelopment())
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy("Lab05BrowserProbe", policy =>
+        {
+            policy.WithOrigins("http://localhost:4173")
+                  .WithMethods("GET")
+                  .WithHeaders("X-Lab-Cors-Probe");
+        });
+    });
+}
 
 var app = builder.Build();
 
-var resetRequested = args.Contains("--reset-database", StringComparer.Ordinal);
-await DatabaseBootstrap.InitializeAsync(app.Services, app.Configuration, app.Environment, resetRequested);
+var resetRequested = args.Contains(
+    "--reset-database",
+    StringComparer.Ordinal);
+
+await DatabaseBootstrap.InitializeAsync(
+    app.Services,
+    app.Configuration,
+    app.Environment,
+    resetRequested);
 
 if (resetRequested)
 {
@@ -46,20 +73,38 @@ if (app.Environment.IsDevelopment())
     app.MapScalarApiReference();
 }
 
+// ЛР №5. CORS виконується до authentication/authorization.
+app.UseRouting();
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("Lab05BrowserProbe");
+}
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseDefaultFiles();
 app.UseStaticFiles();
 
-app.MapGet("/health", async (SecureLabDbContext dbContext, CancellationToken cancellationToken) =>
-    await dbContext.Database.CanConnectAsync(cancellationToken)
-        ? Results.Ok(new { status = "ready" })
-        : Results.Problem(
-            title: "База даних недоступна",
-            statusCode: StatusCodes.Status503ServiceUnavailable))
+app.MapGet(
+    "/health",
+    async (
+        SecureLabDbContext dbContext,
+        CancellationToken cancellationToken) =>
+        await dbContext.Database.CanConnectAsync(cancellationToken)
+            ? Results.Ok(new { status = "ready" })
+            : Results.Problem(
+                title: "База даних недоступна",
+                statusCode: StatusCodes.Status503ServiceUnavailable))
     .WithName("GetHealth")
     .Produces(StatusCodes.Status200OK)
     .ProducesProblem(StatusCodes.Status503ServiceUnavailable);
 
 app.MapIncidentEndpoints();
+app.MapLab03Identity();
+app.MapLab02Endpoints();
+
 app.MapFallbackToFile("index.html");
 
 app.Run();
