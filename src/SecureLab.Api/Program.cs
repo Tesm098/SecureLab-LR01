@@ -57,6 +57,21 @@ if (resetRequested)
     return;
 }
 
+// ЛР №6. Захисні заголовки для всіх HTTP-відповідей,
+// включно з необробленими помилками 500.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        context.Response.Headers["Referrer-Policy"] = "no-referrer";
+
+        return Task.CompletedTask;
+    });
+
+    await next(context);
+});
+
 app.UseExceptionHandler();
 app.UseStatusCodePages();
 
