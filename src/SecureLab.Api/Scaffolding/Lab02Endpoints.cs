@@ -165,7 +165,8 @@ public static class Lab02Endpoints
                 $"/api/incidents/{incident.Id}",
                 response);
         })
-        .RequireAuthorization();
+        .RequireAuthorization()
+        .AddEndpointFilter<Lab06AntiforgeryFilter>();
 
     }
 }

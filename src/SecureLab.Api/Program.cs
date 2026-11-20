@@ -5,6 +5,7 @@ using Scalar.AspNetCore;
 using SecureLab.Api.Application.Incidents;
 using SecureLab.Api.Data;
 using SecureLab.Api.Presentation.Endpoints;
+using Microsoft.AspNetCore.Antiforgery;
 
 var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 {
@@ -14,6 +15,12 @@ var builder = WebApplication.CreateBuilder(new WebApplicationOptions
 
 builder.Services.AddOpenApi();
 builder.Services.AddProblemDetails();
+
+// ЛР №6. Стандартний захист від CSRF.
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-SecureLab-CSRF";
+});
 
 var connectionString = builder.Configuration.GetConnectionString("SecureLab")
     ?? throw new InvalidOperationException(
@@ -56,6 +63,21 @@ if (resetRequested)
 {
     return;
 }
+
+// ЛР №6. Захисні заголовки для всіх HTTP-відповідей,
+// включно з необробленими помилками 500.
+app.Use(async (context, next) =>
+{
+    context.Response.OnStarting(() =>
+    {
+        context.Response.Headers["X-Content-Type-Options"] = "nosniff";
+        context.Response.Headers["Referrer-Policy"] = "no-referrer";
+
+        return Task.CompletedTask;
+    });
+
+    await next(context);
+});
 
 app.UseExceptionHandler();
 app.UseStatusCodePages();
@@ -104,6 +126,20 @@ app.MapGet(
 app.MapIncidentEndpoints();
 app.MapLab03Identity();
 app.MapLab02Endpoints();
+
+// ЛР №6. Видача CSRF-токена автентифікованому користувачу.
+app.MapGet("/api/auth/csrf-token", (
+    HttpContext context,
+    IAntiforgery antiforgery) =>
+{
+    var tokens = antiforgery.GetAndStoreTokens(context);
+
+    return Results.Ok(new
+    {
+        token = tokens.RequestToken
+    });
+})
+.RequireAuthorization();
 
 app.MapFallbackToFile("index.html");
 
