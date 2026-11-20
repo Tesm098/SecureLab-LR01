@@ -115,7 +115,15 @@ public static class Lab03Identity
             var result = await signIn.PasswordSignInAsync(input.UserName, input.Password, false, false);
             return result.Succeeded ? Results.NoContent() : Results.Unauthorized();
         });
-        app.MapPost("/api/auth/logout", () => Results.StatusCode(StatusCodes.Status501NotImplemented));
+        app.MapPost("/api/auth/logout", async (
+            SignInManager<ApplicationUser> signIn) =>
+        {
+            await signIn.SignOutAsync();
+            return Results.NoContent();
+        })
+        .RequireAuthorization()
+        .AddEndpointFilter<Lab06AntiforgeryFilter>();
+
         app.MapGet("/api/me", async (
             HttpContext context,
             UserManager<ApplicationUser> users) =>

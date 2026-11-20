@@ -19,4 +19,29 @@ public static class CookieClient
         }
         return client;
     }
+        // ЛР №6. Отримання CSRF-токена для тестового cookie-сеансу.
+    public static async Task UseAntiforgeryTokenAsync(
+        this HttpClient client)
+    {
+        const string headerName = "X-SecureLab-CSRF";
+
+        client.DefaultRequestHeaders.Remove(headerName);
+
+        using var response =
+            await client.GetAsync("/api/auth/csrf-token");
+
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content
+            .ReadFromJsonAsync<CsrfTokenResponse>();
+
+        if (string.IsNullOrWhiteSpace(result?.Token))
+            throw new InvalidOperationException(
+                "CSRF token was not received.");
+
+        client.DefaultRequestHeaders.Add(
+            headerName, result.Token);
+    }
+
+    private sealed record CsrfTokenResponse(string Token);
 }

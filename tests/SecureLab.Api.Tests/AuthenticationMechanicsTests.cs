@@ -129,7 +129,8 @@ public sealed class AuthenticationMechanicsTests(SecureLabApiFactory factory)
         // Автентифікуємося як Bob.
         using var client =
             await factory.LoginAsync("bob", password);
-
+        // Отримуємо CSRF-токен для автентифікованого Bob.
+        await client.UseAntiforgeryTokenAsync();
         var request = new
         {
             title = "A05-" + Guid.NewGuid().ToString("N"),
